@@ -7,16 +7,15 @@ env:
 before_install:
   - sudo apt update || echo 1
   - sudo apt install -y libtool libtool-bin automake bison libglib2.0
-jobs: 
-  include:
-    - script:
-      - make
-      - ./afl-gcc ./test-instr.c -o test-instr
-      - mkdir seeds; mkdir out
-      - echo "" > seeds/nil_seed
-      - timeout --preserve-status 5s ./afl-fuzz -i seeds -o out/ -- ./test-instr
-      - cd qemu_mode
-      - ./build_qemu_support.sh
-      - cd ..
-      - gcc ./test-instr.c -o test-no-instr
-      - timeout --preserve-status 5s ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr
+    
+script:
+  - make
+  - ./afl-gcc ./test-instr.c -o test-instr
+  - mkdir seeds; mkdir out
+  - echo "" > seeds/nil_seed
+  - timeout --preserve-status 5s ./afl-fuzz -i seeds -o out/ -- ./test-instr
+  - cd qemu_mode
+  - ./build_qemu_support.sh
+  - cd ..
+  - gcc ./test-instr.c -o test-no-instr
+  - timeout --preserve-status 5s ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr
