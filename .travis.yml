@@ -2,7 +2,7 @@ language: c
 
 env:
   - AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_NO_UI=1 AFL_STOP_MANUALLY=1
-  - AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_NO_UI=1 AFL_EXIT_WHEN_DONE=1 AFL_STOP_MANUALLY=0
+  - AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_NO_UI=1 AFL_EXIT_WHEN_DONE=1 
   - AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_NO_UI=1 AFL_BENCH_UNTIL_CRASH=1
   - AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_NO_UI=1 AFL_BENCH_JUST_ONE=1
 
@@ -15,11 +15,15 @@ script:
   - ./afl-gcc ./test-instr.c -o test-instr
   - mkdir seeds; mkdir out
   - echo "" > seeds/nil_seed
-  - if [ "$AFL_STOP_MANUALLY" ]; then timeout --preserve-status 5s ./afl-fuzz -i seeds -o out/ -- ./test-instr; fi
-  - if [ -z "$AFL_STOP_MANUALLY" ]; then ./afl-fuzz -i seeds -o out/ -- ./test-instr; fi
+  - if [ "$AFL_STOP_MANUALLY" -eq 1 ]; 
+    then timeout --preserve-status 5s ./afl-fuzz -i seeds -o out/ -- ./test-instr;
+    else ./afl-fuzz -i seeds -o out/ -- ./test-instr; 
+    fi
   - cd qemu_mode
   - ./build_qemu_support.sh
   - cd ..
   - gcc ./test-instr.c -o test-no-instr
-  - if [ "$AFL_STOP_MANUALLY" ]; then timeout --preserve-status 5s ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr; fi
-  - if [ -z "$AFL_STOP_MANUALLY" ]; then ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr; fi
+  - if [ "$AFL_STOP_MANUALLY" -eq 1 ]; 
+    then timeout --preserve-status 5s ./afl-fuzz -Q -i seeds -o out/ -- ./test-instr;
+    else ./afl-fuzz -Q -i seeds -o out/ -- ./test-instr; 
+    fi
