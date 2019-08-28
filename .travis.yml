@@ -5,8 +5,7 @@ env:
   - AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_NO_UI=1 AFL_BENCH_JUST_ONE=1
 
 before_install:
-  - sudo apt clean
-  - sudo apt update
+  - sudo apt update || echo 1
   - sudo apt install -y libtool libtool-bin automake bison libglib2.0
 jobs: 
   include:
