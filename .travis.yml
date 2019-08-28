@@ -16,10 +16,10 @@ script:
   - mkdir seeds; mkdir out
   - echo "" > seeds/nil_seed
   - if [ "$AFL_STOP_MANUALLY" ]; then timeout --preserve-status 5s ./afl-fuzz -i seeds -o out/ -- ./test-instr; fi
-  - if [ not "$AFL_STOP_MANUALLY" ]; then ./afl-fuzz -i seeds -o out/ -- ./test-instr; fi
+  - if [ -z "$AFL_STOP_MANUALLY" ]; then ./afl-fuzz -i seeds -o out/ -- ./test-instr; fi
   - cd qemu_mode
   - ./build_qemu_support.sh
   - cd ..
   - gcc ./test-instr.c -o test-no-instr
   - if [ "$AFL_STOP_MANUALLY" ]; then timeout --preserve-status 5s ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr; fi
-  - if [ not "$AFL_STOP_MANUALLY" ]; then ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr; fi
+  - if [ -z "$AFL_STOP_MANUALLY" ]; then ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr; fi
