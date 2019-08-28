@@ -7,7 +7,7 @@ env:
   - AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_NO_UI=1 AFL_BENCH_JUST_ONE=1
 
 before_install:
-  - sudo apt update
+  - sudo apt update || echo "TODO: fix it"
   - sudo apt install -y libtool libtool-bin automake bison libglib2.0
 
 script:
@@ -15,11 +15,11 @@ script:
   - ./afl-gcc ./test-instr.c -o test-instr
   - mkdir seeds; mkdir out
   - echo "" > seeds/nil_seed
-  - if [ $AFL_STOP_MANUALLY" ]; then timeout --preserve-status 5s ./afl-fuzz -i seeds -o out/ -- ./test-instr; fi
-  - if [ not $AFL_STOP_MANUALLY" ]; then ./afl-fuzz -i seeds -o out/ -- ./test-instr; fi
+  - if [ "$AFL_STOP_MANUALLY" ]; then timeout --preserve-status 5s ./afl-fuzz -i seeds -o out/ -- ./test-instr; fi
+  - if [ not "$AFL_STOP_MANUALLY" ]; then ./afl-fuzz -i seeds -o out/ -- ./test-instr; fi
   - cd qemu_mode
   - ./build_qemu_support.sh
   - cd ..
   - gcc ./test-instr.c -o test-no-instr
-  - if [ $AFL_STOP_MANUALLY" ]; then timeout --preserve-status 5s ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr
-  - if [ not $AFL_STOP_MANUALLY" ]; then ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr
+  - if [ "$AFL_STOP_MANUALLY" ]; then timeout --preserve-status 5s ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr
+  - if [ not "$AFL_STOP_MANUALLY" ]; then ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr
