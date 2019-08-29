@@ -20,7 +20,7 @@ script:
     then ./afl-fuzz -i seeds -o out/ -- ./test-instr; 
     else timeout --preserve-status 5s ./afl-fuzz -i seeds -o out/ -- ./test-instr;
     fi
-  - test_scripts/check_fuzzer_stats.sh -o out -k peak_rss_mb -v 1450 -p 500
+  - .travis/check_fuzzer_stats.sh -o out -k peak_rss_mb -v 1450 -p 500
   - cd qemu_mode
   - ./build_qemu_support.sh
   - cd ..
@@ -29,5 +29,5 @@ script:
     then ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr; 
     else timeout --preserve-status 5s ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr;
     fi
-  - test_scripts/check_fuzzer_stats.sh -o out -k peak_rss_mb -v 11700 -p 5000
+  - .travis/check_fuzzer_stats.sh -o out -k peak_rss_mb -v 11700 -p 5000
 
