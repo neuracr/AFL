@@ -1,33 +1,54 @@
 language: c
 
 env:
-  - AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_NO_UI=1
+  - AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_NO_UI=1 AFL_STOP_MANUALLY=1
+  - AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_NO_UI=1 AFL_EXIT_WHEN_DONE=1 
+ # TODO: test AFL_BENCH_UNTIL_CRASH once we have a target that crashes
+  - AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 AFL_NO_UI=1 AFL_BENCH_JUST_ONE=1
 
 before_install:
   - sudo apt update || echo 
   - sudo apt install -y libtool libtool-bin automake bison libglib2.0
-jobs: 
-  include:
-    - script:
-      - make
-      - ./afl-gcc ./test-instr.c -o test-instr
-      - mkdir seeds; mkdir out
-      - echo "" > seeds/nil_seed
-      - timeout --preserve-status 5s ./afl-fuzz -i seeds -o out/ -- ./test-instr
-      - cd qemu_mode
-      - ./build_qemu_support.sh
-      - cd ..
-      - gcc ./test-instr.c -o test-no-instr
-      - timeout --preserve-status 5s ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr
-    - script:
-      - export AFL_EXIT_WHEN_DONE=1
-      - make
-      - ./afl-gcc ./test-instr.c -o test-instr
-      - mkdir seeds; mkdir out
-      - echo "" > seeds/nil_seed
-      - ./afl-fuzz -i seeds -o out/ -- ./test-instr
-      - cd qemu_mode
-      - ./build_qemu_support.sh
-      - cd ..
-      - gcc ./test-instr.c -o test-no-instr
-      - ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr
+
+# TODO: Look into splitting off some builds using a build matrix.
+script:
+  - make
+  - ./afl-gcc ./test-instr.c -o test-instr-gcc
+  - mkdir seeds
+  - echo "" > seeds/nil_seed
+  - if [ -z "$AFL_STOP_MANUALLY" ]; 
+    then ./afl-fuzz -i seeds -o out/ -- ./test-instr-gcc; 
+    else timeout --preserve-status 5s ./afl-fuzz -i seeds -o out/ -- ./test-instr-gcc;
+    fi
+  - .travis/check_fuzzer_stats.sh -o out -k peak_rss_mb -v 1 -p 3
+  - rm -r out/*
+  - ./afl-clang ./test-instr.c -o test-instr-clang
+  - if [ -z "$AFL_STOP_MANUALLY" ]; 
+    then ./afl-fuzz -i seeds -o out/ -- ./test-instr-clang; 
+    else timeout --preserve-status 5s ./afl-fuzz -i seeds -o out/ -- ./test-instr-clang;
+    fi
+  - .travis/check_fuzzer_stats.sh -o out -k peak_rss_mb -v 1 -p 2
+  - make clean
+  - CC=clang CXX=clang++ make
+  - cd llvm_mode
+# TODO: Build with different versions of clang/LLVM since LLVM passes don't have
+# a stable API.
+  - CC=clang CXX=clang++ LLVM_CONFIG=llvm-config make
+  - cd ..
+  - rm -r out/*
+  - ./afl-clang-fast ./test-instr.c -o test-instr-clang-fast
+  - if [ -z "$AFL_STOP_MANUALLY" ]; 
+    then ./afl-fuzz -i seeds -o out/ -- ./test-instr-clang; 
+    else timeout --preserve-status 5s ./afl-fuzz -i seeds -o out/ -- ./test-instr-clang-fast;
+    fi
+  - .travis/check_fuzzer_stats.sh -o out -k peak_rss_mb -v 1 -p 3
+  - cd qemu_mode
+  - ./build_qemu_support.sh
+  - cd ..
+  - gcc ./test-instr.c -o test-no-instr
+  - if [ -z "$AFL_STOP_MANUALLY" ]; 
+    then ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr; 
+    else timeout --preserve-status 5s ./afl-fuzz -Q -i seeds -o out/ -- ./test-no-instr;
+    fi
+  - .travis/check_fuzzer_stats.sh -o out -k peak_rss_mb -v 12 -p 9
+
